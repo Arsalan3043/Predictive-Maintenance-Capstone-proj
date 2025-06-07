@@ -1,92 +1,93 @@
-# data ingestion
-import numpy as np
-import pandas as pd
-pd.set_option('future.no_silent_downcasting', True)
-
 import os
+import sys
+import pandas as pd
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),"../.."))) # to solve src import problem
+from pandas import DataFrame
 from sklearn.model_selection import train_test_split
-import yaml
-import logging
+
+from src.entity.config_entity import DataIngestionConfig
+from src.entity.artifact_entity import DataIngestionArtifact
+from src.exception import MyException
 from src.logger import logging
-from src.connections import s3_connection
 
-
-def load_params(params_path: str) -> dict:
-    """Load parameters from a YAML file."""
-    try:
-        with open(params_path, 'r') as file:
-            params = yaml.safe_load(file)
-        logging.debug('Parameters retrieved from %s', params_path)
-        return params
-    except FileNotFoundError:
-        logging.error('File not found: %s', params_path)
-        raise
-    except yaml.YAMLError as e:
-        logging.error('YAML error: %s', e)
-        raise
-    except Exception as e:
-        logging.error('Unexpected error: %s', e)
-        raise
-
-def load_data(data_url: str) -> pd.DataFrame:
-    """Load data from a CSV file."""
-    try:
-        df = pd.read_csv(data_url)
-        logging.info('Data loaded from %s', data_url)
-        return df
-    except pd.errors.ParserError as e:
-        logging.error('Failed to parse the CSV file: %s', e)
-        raise
-    except Exception as e:
-        logging.error('Unexpected error occurred while loading the data: %s', e)
-        raise
-
-def preprocess_data(df: pd.DataFrame) -> pd.DataFrame:
-    """Preprocess the data."""
-    try:
-        # df.drop(columns=['tweet_id'], inplace=True)
-        logging.info("pre-processing...")
-        final_df = df[df['sentiment'].isin(['positive', 'negative'])]
-        final_df['sentiment'] = final_df['sentiment'].replace({'positive': 1, 'negative': 0})
-        logging.info('Data preprocessing completed')
-        return final_df
-    except KeyError as e:
-        logging.error('Missing column in the dataframe: %s', e)
-        raise
-    except Exception as e:
-        logging.error('Unexpected error during preprocessing: %s', e)
-        raise
-
-def save_data(train_data: pd.DataFrame, test_data: pd.DataFrame, data_path: str) -> None:
-    """Save the train and test datasets."""
-    try:
-        raw_data_path = os.path.join(data_path, 'raw')
-        os.makedirs(raw_data_path, exist_ok=True)
-        train_data.to_csv(os.path.join(raw_data_path, "train.csv"), index=False)
-        test_data.to_csv(os.path.join(raw_data_path, "test.csv"), index=False)
-        logging.debug('Train and test data saved to %s', raw_data_path)
-    except Exception as e:
-        logging.error('Unexpected error occurred while saving the data: %s', e)
-        raise
-
-def main():
-    try:
-        params = load_params(params_path='params.yaml')
-        test_size = params['data_ingestion']['test_size']
-        # test_size = 0.2
+class DataIngestion:
+    def __init__(self,data_ingestion_config:DataIngestionConfig=DataIngestionConfig()):
+        """
+        :param data_ingestion_config: configuration for data ingestion
+        """
+        try:
+            self.data_ingestion_config = data_ingestion_config
+        except Exception as e:
+            raise MyException(e,sys)
         
-        df = load_data(data_url='notebooks\data.csv')
-        # s3 = s3_connection.s3_operations("bucket-name", "accesskey", "secretkey")
-        # df = s3.fetch_file_from_s3("data.csv")
 
+    def load_data(self):
+        """Load data from a CSV file."""
+        try:
+            logging.info("Starting data ingestion process.")
 
+            # Read the raw data
+            dataframe = pd.read_csv("notebooks\data.csv")
+            logging.info(f"Read data.csv successfully with shape {dataframe.shape}")
+            return dataframe
+        except Exception as e:
+            logging.error('Unexpected error occurred while loading the data: %s', e)
+            raise
 
-        final_df = preprocess_data(df)
-        train_data, test_data = train_test_split(final_df, test_size=test_size, random_state=42)
-        save_data(train_data, test_data, data_path='./data')
-    except Exception as e:
-        logging.error('Failed to complete the data ingestion process: %s', e)
-        print(f"Error: {e}")
+    def split_data_as_train_test(self,dataframe: DataFrame) ->None:
+        """
+        Method Name :   split_data_as_train_test
+        Description :   This method splits the dataframe into train set and test set based on split ratio 
+        
+        Output      :   Folder is created in s3 bucket
+        On Failure  :   Write an exception log and then raise an exception
+        """
+        logging.info("Entered split_data_as_train_test method of Data_Ingestion class")
 
-if __name__ == '__main__':
-    main()
+        try:
+            train_set, test_set = train_test_split(dataframe, test_size=self.data_ingestion_config.train_test_split_ratio)
+            logging.info("Performed train test split on the dataframe")
+            logging.info(
+                "Exited split_data_as_train_test method of Data_Ingestion class"
+            )
+            dir_path = os.path.dirname(self.data_ingestion_config.training_file_path)
+            os.makedirs(dir_path,exist_ok=True)
+            
+            logging.info(f"Exporting train and test file path.")
+            train_set.to_csv(self.data_ingestion_config.training_file_path,index=False,header=True)
+            test_set.to_csv(self.data_ingestion_config.testing_file_path,index=False,header=True)
+
+            logging.info(f"Exported train and test file path.")
+        except Exception as e:
+            raise MyException(e, sys) from e
+
+    def initiate_data_ingestion(self) ->DataIngestionArtifact:
+        """
+        Method Name :   initiate_data_ingestion
+        Description :   This method initiates the data ingestion components of training pipeline 
+        
+        Output      :   train set and test set are returned as the artifacts of data ingestion components
+        On Failure  :   Write an exception log and then raise an exception
+        """
+        logging.info("Entered initiate_data_ingestion method of Data_Ingestion class")
+
+        try:
+            dataframe = self.load_data()
+
+            logging.info("Got the data")
+
+            self.split_data_as_train_test(dataframe)
+
+            logging.info("Performed train test split on the dataset")
+
+            logging.info(
+                "Exited initiate_data_ingestion method of Data_Ingestion class"
+            )
+
+            data_ingestion_artifact = DataIngestionArtifact(trained_file_path=self.data_ingestion_config.training_file_path,
+            test_file_path=self.data_ingestion_config.testing_file_path)
+            
+            logging.info(f"Data ingestion artifact: {data_ingestion_artifact}")
+            return data_ingestion_artifact
+        except Exception as e:
+            raise MyException(e, sys) from e

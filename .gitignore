@@ -175,3 +175,5 @@ cython_debug/
 cred.txt 
 notebooks/
 local_s3/
+
+artifact/
