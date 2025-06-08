@@ -33,6 +33,7 @@ categorical_columns:
 
 drop_columns:
   - UDI
+  - Product ID
 
 # for data transformation
 num_features:
@@ -42,9 +43,9 @@ num_features:
   - Torque [Nm]
   - Tool wear [min]
 
-mm_columns:
-  - Air temperature [K]
-  - Process temperature [K]
-  - Torque [Nm]
-  - Tool wear [min]
+# mm_columns:
+#   - Air temperature [K]
+#   - Process temperature [K]
+#   - Torque [Nm]
+#   - Tool wear [min]
 
