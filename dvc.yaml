@@ -1,0 +1,66 @@
+stages:
+  data_ingestion:
+    cmd: python src/data/data_ingestion.py
+    deps:
+    - src/data/data_ingestion.py
+    - notebooks/data.csv
+    outs:
+    - artifacts/data_ingestion/ingested/train.csv
+    - artifacts/data_ingestion/ingested/test.csv
+  data_transformation:
+    cmd: python src/data/data_transformation.py
+    deps:
+    - src/data/data_transformation.py
+    - artifacts/data_ingestion/ingested/train.csv
+    - artifacts/data_ingestion/ingested/test.csv
+    - artifacts/data_validation/status.txt
+    outs:
+    - artifacts/data_transformation/X_train.npy
+    - artifacts/data_transformation/y_train.npy
+    - artifacts/data_transformation/X_test.npy
+    - artifacts/data_transformation/y_test.npy
+  data_validation:
+    cmd: python src/data/data_validation.py
+    deps:
+    - src/data/data_validation.py
+    - artifacts/data_ingestion/train.csv
+    - artifacts/data_ingestion/test.csv
+    outs:
+    - artifacts/data_validation/status.txt
+  model_evaluation:
+    cmd: python src/model/model_evaluation.py
+    deps:
+    - src/model/model_evaluation.py
+    - artifacts/model_trainer/model.pkl
+    - artifacts/data_ingestion/test.csv
+    outs:
+    - artifacts/model_evaluation/evaluation.json
+  model_pusher:
+    cmd: python src/model/model_pusher.py
+    deps:
+    - src/model/model_pusher.py
+    - artifacts/model_trainer/model.pkl
+    - artifacts/model_evaluation/evaluation.json
+    outs:
+    - saved_models/model.pkl
+  model_registration:
+    cmd: python src/model/register_model.py
+    deps:
+    - reports/experiment_info.json
+    - src/model/register_model.py
+  model_training:
+    cmd: python src/model/train_model.py
+    deps:
+    - src/model/train_model.py
+    - artifacts/data_transformation/X_train.npy
+    - artifacts/data_transformation/y_train.npy
+    outs:
+    - artifacts/model_trainer/model.pkl
+    - artifacts/model_trainer/metrics.json
+    params:
+    - model_trainer.n_estimators
+    - model_trainer.min_samples_split
+    - model_trainer.min_samples_leaf
+    - model_trainer.max_depth
+    - model_trainer.criterion
+    - model_trainer.random_state

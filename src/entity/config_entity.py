@@ -62,3 +62,12 @@ class ModelEvaluationConfig:
 class ModelPusherConfig:
     bucket_name: str = MODEL_BUCKET_NAME
     s3_model_key_path: str = MODEL_FILE_NAME
+
+# Model registration-specific configuration
+@dataclass
+class ModelRegistrationConfig:
+    tracking_uri: str = "https://dagshub.com/Arsalan3043/Predictive-Maintenance-Capstone-proj.mlflow"
+    dagshub_repo_owner: str = "Arsalan3043"
+    dagshub_repo_name: str = "Predictive-Maintenance-Capstone-proj"
+    model_name: str = "my_model"
+    model_info_path: str = os.path.join("reports", "experiment_info.json")  # where model run_id & model_path is stored

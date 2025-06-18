@@ -1,21 +1,47 @@
 import os
 import sys
+import json
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),"../.."))) # to solve src import problem
 from src.entity.config_entity import ModelEvaluationConfig
 from src.entity.artifact_entity import ModelTrainerArtifact, DataIngestionArtifact, ModelEvaluationArtifact
-from sklearn.metrics import f1_score
+from sklearn.metrics import f1_score, accuracy_score, precision_score, recall_score, roc_auc_score
 from src.exception import MyException
 from src.constants import TARGET_COLUMN
 from src.logger import logging
 from src.utils.main_utils import load_object
-import sys
 import pandas as pd
 from typing import Optional
 from src.entity.s3_estimator import Proj1Estimator
 from src.constants import TARGET_COLUMN, SCHEMA_FILE_PATH, CURRENT_YEAR
 from src.utils.main_utils import save_object, save_numpy_array_data, read_yaml_file
 from dataclasses import dataclass
+import mlflow
+import mlflow.sklearn
+import dagshub
+
+# ------------------- DagsHub & MLflow Setup ---------------------
+# dagshub_token = os.getenv("CAPSTONE_TEST")
+# if not dagshub_token:
+#     raise EnvironmentError("CAPSTONE_TEST environment variable is not set")
+
+# os.environ["MLFLOW_TRACKING_USERNAME"] = dagshub_token
+# os.environ["MLFLOW_TRACKING_PASSWORD"] = dagshub_token
+
+# dagshub_url = "https://dagshub.com"
+# repo_owner = "vikashdas770"
+# repo_name = "YT-Capstone-Project"
+
+# mlflow.set_tracking_uri(f"{dagshub_url}/{repo_owner}/{repo_name}.mlflow")
+# mlflow.set_experiment("my-dvc-pipeline")
+# ---------------------------------------------------------------
+
+# Below code block is for local use
+# -------------------------------------------------------------------------------------
+mlflow.set_tracking_uri('https://dagshub.com/Arsalan3043/Predictive-Maintenance-Capstone-proj.mlflow')
+dagshub.init(repo_owner='Arsalan3043', repo_name='Predictive-Maintenance-Capstone-proj', mlflow=True)
+mlflow.set_experiment("my-dvc-pipeline")
+# -------------------------------------------------------------------------------------
 
 @dataclass
 class EvaluateModelResponse:
@@ -23,7 +49,6 @@ class EvaluateModelResponse:
     best_model_f1_score: float
     is_model_accepted: bool
     difference: float
-
 
 class ModelEvaluation:
 
@@ -50,13 +75,12 @@ class ModelEvaluation:
             model_path=self.model_eval_config.s3_model_key_path
             proj1_estimator = Proj1Estimator(bucket_name=bucket_name,
                                                model_path=model_path)
-
             if proj1_estimator.is_model_present(model_path=model_path):
                 return proj1_estimator
             return None
         except Exception as e:
             raise  MyException(e,sys)
-        
+
     def _create_dummy_columns(self, df):
         """Create dummy variables for categorical features."""
         logging.info("Creating dummy variables for categorical features")
@@ -68,7 +92,6 @@ class ModelEvaluation:
         Apply domain-specific feature engineering as explored in EDA.
         """
         logging.info("Applying feature engineering transformations")
-
         try:
             # 1. Temperature difference
             df['temp_difference'] = df['Process temperature [K]'] - df['Air temperature [K]']
@@ -85,14 +108,12 @@ class ModelEvaluation:
 
             logging.info("Feature engineering completed")
             return df
-
         except Exception as e:
             logging.error("Feature engineering failed")
             raise MyException(e, sys)
 
     def _drop_id_column(self, df):
         """Drop the specified columns from schema_config if they exist."""
-        import logging
         drop_cols = self._schema_config['drop_columns']
         logging.info(f"Dropping columns (if exist): {drop_cols}")
         df = df.drop(columns=[col for col in drop_cols if col in df.columns])
@@ -122,20 +143,52 @@ class ModelEvaluation:
             trained_model_f1_score = self.model_trainer_artifact.metric_artifact.f1_score
             logging.info(f"F1_Score for this model: {trained_model_f1_score}")
 
-            best_model_f1_score=None
+            with mlflow.start_run() as run:
+                y_pred = trained_model.predict(x)
+                y_proba = trained_model.predict_proba(x)[:, 1] if hasattr(trained_model, "predict_proba") else None
+
+                acc = accuracy_score(y, y_pred)
+                prec = precision_score(y, y_pred)
+                rec = recall_score(y, y_pred)
+                auc = roc_auc_score(y, y_proba) if y_proba is not None else None
+
+                metrics_dict = {
+                    'accuracy': acc,
+                    'precision': prec,
+                    'recall': rec,
+                    'auc': auc,
+                    'f1_score': trained_model_f1_score
+                }
+
+                for metric_name, metric_value in metrics_dict.items():
+                    if metric_value is not None:
+                        mlflow.log_metric(metric_name, metric_value)
+
+                if hasattr(trained_model, "get_params"):
+                    for k, v in trained_model.get_params().items():
+                        mlflow.log_param(k, v)
+
+                mlflow.sklearn.log_model(trained_model, artifact_path="model")
+
+                save_metrics(metrics_dict, 'reports/metrics.json')
+                save_model_info(run.info.run_id, "model", 'reports/experiment_info.json')
+                mlflow.log_artifact('reports/metrics.json')
+
+            best_model_f1_score = None
             best_model = self.get_best_model()
             if best_model is not None:
                 logging.info(f"Computing F1_Score for production model..")
                 y_hat_best_model = best_model.predict(x)
                 best_model_f1_score = f1_score(y, y_hat_best_model)
                 logging.info(f"F1_Score-Production Model: {best_model_f1_score}, F1_Score-New Trained Model: {trained_model_f1_score}")
-            
+
             tmp_best_model_score = 0 if best_model_f1_score is None else best_model_f1_score
-            result = EvaluateModelResponse(trained_model_f1_score=trained_model_f1_score,
-                                           best_model_f1_score=best_model_f1_score,
-                                           is_model_accepted=trained_model_f1_score > tmp_best_model_score,
-                                           difference=trained_model_f1_score - tmp_best_model_score
-                                           )
+            result = EvaluateModelResponse(
+                trained_model_f1_score=trained_model_f1_score,
+                best_model_f1_score=best_model_f1_score,
+                is_model_accepted=trained_model_f1_score > tmp_best_model_score,
+                difference=trained_model_f1_score - tmp_best_model_score
+            )
             logging.info(f"Result: {result}")
             return result
 
@@ -166,3 +219,22 @@ class ModelEvaluation:
             return model_evaluation_artifact
         except Exception as e:
             raise MyException(e, sys) from e
+
+def save_metrics(metrics: dict, file_path: str) -> None:
+    try:
+        with open(file_path, 'w') as file:
+            json.dump(metrics, file, indent=4)
+        logging.info('Metrics saved to %s', file_path)
+    except Exception as e:
+        logging.error('Error occurred while saving the metrics: %s', e)
+        raise
+
+def save_model_info(run_id: str, model_path: str, file_path: str) -> None:
+    try:
+        model_info = {'run_id': run_id, 'model_path': model_path}
+        with open(file_path, 'w') as file:
+            json.dump(model_info, file, indent=4)
+        logging.debug('Model info saved to %s', file_path)
+    except Exception as e:
+        logging.error('Error occurred while saving the model info: %s', e)
+        raise

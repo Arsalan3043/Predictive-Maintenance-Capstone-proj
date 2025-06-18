@@ -10,20 +10,23 @@ from src.data.data_transformation import DataTransformation
 from src.model.train_model import ModelTrainer
 from src.model.model_evaluation import ModelEvaluation
 from src.model.model_pusher import ModelPusher
+from src.model.register_model import ModelRegistrar
 
 from src.entity.config_entity import (DataIngestionConfig,
                                           DataValidationConfig,
                                           DataTransformationConfig,
                                           ModelTrainerConfig,
                                           ModelEvaluationConfig,
-                                          ModelPusherConfig)
+                                          ModelPusherConfig,
+                                          ModelRegistrationConfig)
                                           
 from src.entity.artifact_entity import (DataIngestionArtifact,
                                             DataValidationArtifact,
                                             DataTransformationArtifact,
                                             ModelTrainerArtifact,
                                             ModelEvaluationArtifact,
-                                            ModelPusherArtifact)
+                                            ModelPusherArtifact,
+                                            ModelRegistrationArtifact)
 
 
 
@@ -35,6 +38,7 @@ class TrainPipeline:
         self.model_trainer_config = ModelTrainerConfig()
         self.model_evaluation_config = ModelEvaluationConfig()
         self.model_pusher_config = ModelPusherConfig()
+        self.model_registration_config = ModelRegistrationConfig()
 
 
     
@@ -126,6 +130,17 @@ class TrainPipeline:
             return model_pusher_artifact
         except Exception as e:
             raise MyException(e, sys)
+        
+    def start_model_registration(self) -> ModelRegistrationArtifact:
+        """
+        This method registers the model to MLflow/DagsHub registry and transitions it to staging.
+        """
+        try:
+            model_registrar = ModelRegistrar(config=self.model_registration_config)
+            model_registration_artifact = model_registrar.initiate_model_registration()
+            return model_registration_artifact
+        except Exception as e:
+            raise MyException(e, sys)
 
     def run_pipeline(self, ) -> None:
             """
@@ -144,5 +159,9 @@ class TrainPipeline:
                     return None
                 model_pusher_artifact = self.start_model_pusher(model_evaluation_artifact=model_evaluation_artifact)
                 
+                # Register the model with MLflow/DagsHub
+                model_registration_artifact = self.start_model_registration()
+                logging.info(f"Model registration successful: {model_registration_artifact}")
+
             except Exception as e:
                 raise MyException(e, sys)

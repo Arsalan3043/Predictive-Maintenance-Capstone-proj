@@ -1,0 +1,14 @@
+model_trainer:              # ← A section for all training-related parameters
+  dir_name: "model_trainer"  # Directory name where training artifacts go
+  trained_model_dir: "trained_model"  # Sub-folder to store the model file
+  trained_model_name: "model.pkl"     # The file name of the trained model
+  expected_score: 0.6                 # Minimum accuracy/score you expect
+  model_config_file_path: "config/model.yaml"  # External config for model settings
+
+  # Hyperparameters for model training
+  n_estimators: 200
+  min_samples_split: 10
+  min_samples_leaf: 1
+  max_depth: 10
+  criterion: "entropy"
+  random_state: 42

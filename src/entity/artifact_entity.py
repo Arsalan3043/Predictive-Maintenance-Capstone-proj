@@ -40,3 +40,10 @@ class ModelEvaluationArtifact:
 class ModelPusherArtifact:
     bucket_name:str
     s3_model_path:str
+
+@dataclass
+class ModelRegistrationArtifact:
+    registered_model_name: str
+    model_version: str
+    model_stage: str
+    model_uri: str
