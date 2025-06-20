@@ -170,9 +170,9 @@ class ModelEvaluation:
 
                 mlflow.sklearn.log_model(trained_model, artifact_path="model")
 
-                save_metrics(metrics_dict, 'reports/metrics.json')
+                save_metrics(metrics_dict, 'reports/evaluation.json')         # Changed the name from metrics.json to evaluation.json
                 save_model_info(run.info.run_id, "model", 'reports/experiment_info.json')
-                mlflow.log_artifact('reports/metrics.json')
+                mlflow.log_artifact('reports/evaluation.json')                # Changed the name from metrics.json to evaluation.json
 
             best_model_f1_score = None
             best_model = self.get_best_model()
@@ -238,3 +238,53 @@ def save_model_info(run_id: str, model_path: str, file_path: str) -> None:
     except Exception as e:
         logging.error('Error occurred while saving the model info: %s', e)
         raise
+
+# Main block for DVC pipeline execution
+
+if __name__ == "__main__":
+    from src.entity.config_entity import ModelEvaluationConfig
+    from src.entity.artifact_entity import DataIngestionArtifact, ModelTrainerArtifact, ClassificationMetricArtifact
+    import json
+
+    try:
+        print("-------------------------------------------------------------")
+        print("Running Model Evaluation Component via DVC pipeline")
+
+        # Load metric values from metrics.json (NOT using dill)
+        with open("artifacts/model_trainer/trained_model/metrics.json", "r") as f:
+            metrics = json.load(f)
+
+        metric_artifact = ClassificationMetricArtifact(
+            f1_score=metrics["f1_score"],
+            precision_score=metrics["precision"],
+            recall_score=metrics["recall"]
+        )
+
+        # Construct the artifacts
+        model_trainer_artifact = ModelTrainerArtifact(
+            trained_model_file_path="artifacts/model_trainer/trained_model/model.pkl",
+            metric_artifact=metric_artifact
+        )
+
+        data_ingestion_artifact = DataIngestionArtifact(
+            trained_file_path="artifacts/data_ingestion/ingested/train.csv",
+            test_file_path="artifacts/data_ingestion/ingested/test.csv"
+        )
+
+        model_eval_config = ModelEvaluationConfig()
+
+        model_evaluation = ModelEvaluation(
+            model_eval_config=model_eval_config,
+            data_ingestion_artifact=data_ingestion_artifact,
+            model_trainer_artifact=model_trainer_artifact
+        )
+
+        # Start evaluation
+        model_eval_artifact = model_evaluation.initiate_model_evaluation()
+        print("Model evaluation completed.")
+        print(f"Is model accepted? {model_eval_artifact.is_model_accepted}")
+        print(f"Accuracy Change: {model_eval_artifact.changed_accuracy}")
+
+    except Exception as e:
+        raise MyException(e, sys)
+

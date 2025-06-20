@@ -1,5 +1,6 @@
 import sys
 import os
+import json
 from typing import Tuple
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),"../.."))) # to solve src import problem
 import numpy as np
@@ -40,12 +41,20 @@ class ModelTrainer:
 
             # Initialize RandomForestClassifier with specified parameters
             model = RandomForestClassifier(
-                n_estimators = self.model_trainer_config._n_estimators,
-                min_samples_split = self.model_trainer_config._min_samples_split,
-                min_samples_leaf = self.model_trainer_config._min_samples_leaf,
-                max_depth = self.model_trainer_config._max_depth,
-                criterion = self.model_trainer_config._criterion,
-                random_state = self.model_trainer_config._random_state
+                # n_estimators = self.model_trainer_config._n_estimators,
+                # min_samples_split = self.model_trainer_config._min_samples_split,
+                # min_samples_leaf = self.model_trainer_config._min_samples_leaf,
+                # max_depth = self.model_trainer_config._max_depth,
+                # criterion = self.model_trainer_config._criterion,
+                # random_state = self.model_trainer_config._random_state
+
+                # While Using Params.yaml
+                n_estimators = self.model_trainer_config.n_estimators,
+                min_samples_split = self.model_trainer_config.min_samples_split,
+                min_samples_leaf = self.model_trainer_config.min_samples_leaf,
+                max_depth = self.model_trainer_config.max_depth,
+                criterion = self.model_trainer_config.criterion,
+                random_state = self.model_trainer_config.random_state
             )
 
             # Fit the model
@@ -88,6 +97,19 @@ class ModelTrainer:
             trained_model, metric_artifact = self.get_model_object_and_report(train=train_arr, test=test_arr)
             logging.info("Model object and artifact loaded.")
             
+            # Save metrics to metrics.json for DVC tracking
+            metrics_path = os.path.join(
+                os.path.dirname(self.model_trainer_config.trained_model_file_path),
+                "metrics.json"
+            )
+            with open(metrics_path, "w") as f:
+                json.dump({
+                    "f1_score": metric_artifact.f1_score,
+                    "precision": metric_artifact.precision_score,
+                    "recall": metric_artifact.recall_score
+                }, f, indent=4)
+            logging.info("Saved metrics to metrics.json for DVC tracking.")
+
             # Load preprocessing object
             preprocessing_obj = load_object(file_path=self.data_transformation_artifact.transformed_object_file_path)
             logging.info("Preprocessing obj loaded.")
@@ -113,3 +135,24 @@ class ModelTrainer:
         
         except Exception as e:
             raise MyException(e, sys) from e
+
+# Main block for DVC pipeline execution        
+if __name__ == "__main__":
+
+    # You need to provide the paths or create DataTransformationArtifact with correct paths
+    # For example, assuming DataTransformationArtifact paths are hardcoded or passed via config:
+    data_transformation_artifact = DataTransformationArtifact(
+        transformed_train_file_path="artifacts/data_transformation/transformed/train.npy",
+        transformed_test_file_path="artifacts/data_transformation/transformed/test.npy",
+        transformed_object_file_path="artifacts/data_transformation/transformed_object/preprocessing.pkl"
+    )
+
+    # Initialize model trainer config (update if needed)
+    model_trainer_config = ModelTrainerConfig()
+
+    # Initialize ModelTrainer and run training
+    trainer = ModelTrainer(
+        data_transformation_artifact=data_transformation_artifact,
+        model_trainer_config=model_trainer_config
+    )
+    trainer.initiate_model_trainer()

@@ -2,65 +2,78 @@ stages:
   data_ingestion:
     cmd: python src/data/data_ingestion.py
     deps:
-    - src/data/data_ingestion.py
-    - notebooks/data.csv
+      - src/data/data_ingestion.py
+      - notebooks/data.csv
     outs:
-    - artifacts/data_ingestion/ingested/train.csv
-    - artifacts/data_ingestion/ingested/test.csv
-  data_transformation:
-    cmd: python src/data/data_transformation.py
-    deps:
-    - src/data/data_transformation.py
-    - artifacts/data_ingestion/ingested/train.csv
-    - artifacts/data_ingestion/ingested/test.csv
-    - artifacts/data_validation/status.txt
-    outs:
-    - artifacts/data_transformation/X_train.npy
-    - artifacts/data_transformation/y_train.npy
-    - artifacts/data_transformation/X_test.npy
-    - artifacts/data_transformation/y_test.npy
+      - artifacts/data_ingestion/ingested/train.csv
+      - artifacts/data_ingestion/ingested/test.csv
+      - artifacts/data_ingestion/feature_store/data.csv
+
   data_validation:
     cmd: python src/data/data_validation.py
     deps:
-    - src/data/data_validation.py
-    - artifacts/data_ingestion/train.csv
-    - artifacts/data_ingestion/test.csv
+      - src/data/data_validation.py
+      - artifacts/data_ingestion/ingested/train.csv
+      - artifacts/data_ingestion/ingested/test.csv
     outs:
-    - artifacts/data_validation/status.txt
-  model_evaluation:
-    cmd: python src/model/model_evaluation.py
+      - artifacts/data_validation/status.txt
+
+  data_transformation:
+    cmd: python src/data/data_transformation.py
     deps:
-    - src/model/model_evaluation.py
-    - artifacts/model_trainer/model.pkl
-    - artifacts/data_ingestion/test.csv
+      - src/data/data_transformation.py
+      - src/entity/config_entity.py
+      - src/entity/artifact_entity.py
+      - src/data/data_validation.py
+      - config/schema.yaml
     outs:
-    - artifacts/model_evaluation/evaluation.json
-  model_pusher:
-    cmd: python src/model/model_pusher.py
-    deps:
-    - src/model/model_pusher.py
-    - artifacts/model_trainer/model.pkl
-    - artifacts/model_evaluation/evaluation.json
-    outs:
-    - saved_models/model.pkl
-  model_registration:
-    cmd: python src/model/register_model.py
-    deps:
-    - reports/experiment_info.json
-    - src/model/register_model.py
+      - artifacts/data_transformation/transformed/train.npy
+      - artifacts/data_transformation/transformed/test.npy
+      - artifacts/data_transformation/transformed_object/preprocessing.pkl
+      - artifacts/data_transformation/status.txt
+
   model_training:
     cmd: python src/model/train_model.py
     deps:
-    - src/model/train_model.py
-    - artifacts/data_transformation/X_train.npy
-    - artifacts/data_transformation/y_train.npy
+      - src/model/train_model.py
+      - artifacts/data_transformation/transformed/train.npy
+      - artifacts/data_transformation/transformed/test.npy
+      - artifacts/data_transformation/transformed_object/preprocessing.pkl
     outs:
-    - artifacts/model_trainer/model.pkl
-    - artifacts/model_trainer/metrics.json
+      - artifacts/model_trainer/trained_model/model.pkl
+      - artifacts/model_trainer/trained_model/metrics.json
     params:
-    - model_trainer.n_estimators
-    - model_trainer.min_samples_split
-    - model_trainer.min_samples_leaf
-    - model_trainer.max_depth
-    - model_trainer.criterion
-    - model_trainer.random_state
+      - model_trainer.n_estimators
+      - model_trainer.min_samples_split
+      - model_trainer.min_samples_leaf
+      - model_trainer.max_depth
+      - model_trainer.criterion
+      - model_trainer.random_state
+
+  model_evaluation:
+    cmd: python src/model/model_evaluation.py
+    deps:
+      - src/model/model_evaluation.py
+      - artifacts/model_trainer/trained_model/model.pkl
+      # - artifacts/data_transformation/transformed/test.npy
+      - artifacts/data_ingestion/ingested/test.csv
+      - config/schema.yaml
+    outs:
+      # - artifacts/model_evaluation/evaluation.json
+      - reports/evaluation.json
+      # - reports/experiment_info.json
+
+  model_pusher:
+    cmd: python src/model/model_pusher.py
+    deps:
+      - src/model/model_pusher.py
+      - artifacts/model_trainer/trained_model/model.pkl
+      - reports/evaluation.json
+    outs:
+      - saved_models/model.pkl
+
+  model_registration:
+    cmd: python src/model/register_model.py
+    deps:
+      - reports/experiment_info.json
+      - src/model/register_model.py

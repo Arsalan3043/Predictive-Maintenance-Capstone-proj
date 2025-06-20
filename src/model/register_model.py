@@ -150,3 +150,45 @@ class ModelRegistrar:
         except Exception as e:
             logging.error(f"Model registration failed: {e}")
             raise
+
+
+if __name__ == "__main__":
+    import sys
+    import os
+    from src.entity.config_entity import ModelRegistrationConfig
+    from src.entity.artifact_entity import ModelRegistrationArtifact
+    from src.exception import MyException
+    from src.logger import logging
+
+    try:
+        print("-------------------------------------------------------------")
+        print("Starting Model Registration Component")
+        logging.info("Starting Model Registration Component")
+
+        # Load model registration config
+        model_registration_config = ModelRegistrationConfig()
+        logging.info(f"Loaded ModelRegistrationConfig: {model_registration_config}")
+
+        # Create ModelRegistrar instance
+        registrar = ModelRegistrar(config=model_registration_config)
+        logging.info("ModelRegistrar instance created")
+
+        # Register and transition model
+        model_registration_artifact: ModelRegistrationArtifact = registrar.initiate_model_registration()
+        logging.info("Model registration completed successfully")
+
+        # Log model artifact details
+        logging.info(f"Model Name: {model_registration_artifact.registered_model_name}")
+        logging.info(f"Model Version: {model_registration_artifact.model_version}")
+        logging.info(f"Model Stage: {model_registration_artifact.model_stage}")
+        logging.info(f"Model URI: {model_registration_artifact.model_uri}")
+
+        print("Model registration completed.")
+        print(f"Model: {model_registration_artifact.registered_model_name}")
+        print(f"Version: {model_registration_artifact.model_version}")
+        print(f"Stage: {model_registration_artifact.model_stage}")
+        print(f"URI: {model_registration_artifact.model_uri}")
+
+    except Exception as e:
+        logging.error("Error occurred during model registration", exc_info=True)
+        raise MyException(e, sys) from e

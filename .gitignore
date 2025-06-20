@@ -176,4 +176,6 @@ cred.txt
 notebooks/
 local_s3/
 
-artifact/
+artifacts/
+reports/
+saved_models/

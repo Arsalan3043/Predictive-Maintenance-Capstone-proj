@@ -7,7 +7,8 @@ from datetime import date
 # MONGODB_URL_KEY = "MONGODB_URL"
 
 PIPELINE_NAME: str = ""
-ARTIFACT_DIR: str = "artifact"
+# ARTIFACT_DIR: str = "artifact"
+ARTIFACT_DIR: str = "artifacts"   # Changed artifact to artifacts due to error while running DVC.yaml
 
 MODEL_FILE_NAME = "model.pkl"
 
