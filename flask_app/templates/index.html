@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Predictive Maintenance</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .form-container {
+            max-width: 700px;
+            margin: 4rem auto;
+            padding: 2rem;
+            background-color: #ffffff;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            border-radius: 1rem;
+        }
+        .result-box {
+            margin-top: 2rem;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            background-color: #e9f7ef;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container form-container">
+    <h2 class="text-center mb-4">Predictive Maintenance App</h2>
+    <form action="/predict" method="POST">
+        <div class="mb-3">
+            <label for="Type" class="form-label">Machine Type</label>
+            <select class="form-select" id="Type" name="Type" required>
+                <option value="" disabled selected>Select a type</option>
+                <option value="L">L</option>
+                <option value="M">M</option>
+                <option value="H">H</option>
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label for="Air_temperature" class="form-label">Air Temperature [K]</label>
+            <input type="number" class="form-control" step="0.01" name="Air temperature [K]" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="Process_temperature" class="form-label">Process Temperature [K]</label>
+            <input type="number" class="form-control" step="0.01" name="Process temperature [K]" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="Rotational_speed" class="form-label">Rotational Speed [rpm]</label>
+            <input type="number" class="form-control" name="Rotational speed [rpm]" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="Torque" class="form-label">Torque [Nm]</label>
+            <input type="number" class="form-control" step="0.01" name="Torque [Nm]" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="Tool_wear" class="form-label">Tool Wear [min]</label>
+            <input type="number" class="form-control" name="Tool wear [min]" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100">Predict Machine Failure</button>
+    </form>
+
+    {% if result is not none %}
+    <div class="result-box mt-4">
+        <h5 class="text-success">Prediction Result</h5>
+        <p><strong>Failure Status:</strong> {{ result.label }}</p>
+        <p><strong>Failure Probability:</strong> {{ result.probability }}%</p>
+    </div>
+    {% endif %}
+</div>
+
+</body>
+</html>

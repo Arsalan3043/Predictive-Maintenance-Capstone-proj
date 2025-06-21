@@ -55,13 +55,10 @@ stages:
     deps:
       - src/model/model_evaluation.py
       - artifacts/model_trainer/trained_model/model.pkl
-      # - artifacts/data_transformation/transformed/test.npy
       - artifacts/data_ingestion/ingested/test.csv
       - config/schema.yaml
     outs:
-      # - artifacts/model_evaluation/evaluation.json
       - reports/evaluation.json
-      # - reports/experiment_info.json
 
   model_pusher:
     cmd: python src/model/model_pusher.py
