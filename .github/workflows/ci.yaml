@@ -28,15 +28,17 @@ jobs:
           python -m pip install --upgrade pip setuptools wheel   
           pip install -r requirements.txt
 
-      - name: run pipeline
-        env:
-          CAPSTONE_TEST: ${{ secrets.CAPSTONE_TEST }} 
-        run: |
-          python run_pipeline.py
-
       - name: Login to AWS ECR
         if: success()
         run: |
             aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
             aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
             aws configure set region ${{ secrets.AWS_REGION }}
+
+      - name: run pipeline
+        env:
+          CAPSTONE_TEST: ${{ secrets.CAPSTONE_TEST }} 
+        run: |
+          python run_pipeline.py
+
+      
