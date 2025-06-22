@@ -30,6 +30,6 @@ jobs:
 
       - name: run pipeline
         env:
-          CAPSTONE_TEST: ${{ secrets.CAPSTONE_TEST }}
+          CAPSTONE_TEST: ${{ secrets.CAPSTONE_TEST }} 
         run: |
           python run_pipeline.py
