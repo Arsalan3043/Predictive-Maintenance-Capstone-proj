@@ -102,6 +102,7 @@ class ModelTrainer:
                 os.path.dirname(self.model_trainer_config.trained_model_file_path),
                 "metrics.json"
             )
+            os.makedirs(os.path.dirname(metrics_path), exist_ok=True)  # ADDED to ensure directory exists
             with open(metrics_path, "w") as f:
                 json.dump({
                     "f1_score": metric_artifact.f1_score,

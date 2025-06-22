@@ -1,6 +1,7 @@
 import yaml
 from datetime import datetime
 import subprocess
+import sys
 
 def update_timestamp():
     timestamp = datetime.now().strftime("%m_%d_%Y_%H_%M_%S")
@@ -27,6 +28,7 @@ def run_pipeline():
         print("[INFO] Pipeline run completed successfully.")
     except subprocess.CalledProcessError as e:
         print(f"[ERROR] DVC pipeline failed: {e}")
+        sys.exit(1)  # ADDED to ensure CI fails on pipeline failure
 
 if __name__ == "__main__":
     run_pipeline()
