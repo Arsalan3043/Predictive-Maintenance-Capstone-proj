@@ -2,13 +2,13 @@ model_trainer:
   criterion: entropy
   dir_name: model_trainer
   expected_score: 0.6
-  max_depth: 10
+  max_depth: 8
   min_samples_leaf: 1
   min_samples_split: 10
   model_config_file_path: config/model.yaml
   n_estimators: 200
   random_state: 42
-  timestamp: '06_22_2025_14_32_46'
+  timestamp: '06_22_2025_22_40_02'
   trained_model_dir: trained_model
   trained_model_name: model.pkl
 timestamp: 06_18_2025_15_20_30
