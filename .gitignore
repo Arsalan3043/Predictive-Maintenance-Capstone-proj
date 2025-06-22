@@ -173,7 +173,7 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 cred.txt 
-notebooks/
+
 local_s3/
 
 artifacts/
