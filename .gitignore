@@ -177,5 +177,5 @@ cred.txt
 local_s3/
 
 artifacts/
-reports/
-saved_models/
+# reports/
+# saved_models/

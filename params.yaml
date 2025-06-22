@@ -8,7 +8,7 @@ model_trainer:
   model_config_file_path: config/model.yaml
   n_estimators: 200
   random_state: 42
-  timestamp: '06_21_2025_16_01_50'
+  timestamp: '06_22_2025_14_32_46'
   trained_model_dir: trained_model
   trained_model_name: model.pkl
 timestamp: 06_18_2025_15_20_30
