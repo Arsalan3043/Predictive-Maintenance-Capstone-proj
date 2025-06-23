@@ -18,12 +18,12 @@ stages:
       size: 523915
     - path: artifacts/data_ingestion/ingested/test.csv
       hash: md5
-      md5: dcdf1ee62e1e7b27761329b1e0f52aef
-      size: 131057
+      md5: b65e1deb09f8ce4b394d36dbd07de483
+      size: 131111
     - path: artifacts/data_ingestion/ingested/train.csv
       hash: md5
-      md5: 5a6fab049edaa175dd5e8fdfed7095d1
-      size: 393010
+      md5: cd2158c730209a94073719e972157feb
+      size: 392956
   data_validation:
     cmd: python src/data/data_validation.py
     deps:
