@@ -24,11 +24,20 @@ warnings.filterwarnings("ignore")
 app = Flask(__name__)
 
 # ------------------- DagsHub & MLflow Setup ---------------------
-dagshub_token = os.getenv("CAPSTONE_TEST")
-if not dagshub_token:
-    raise EnvironmentError("CAPSTONE_TEST environment variable is not set")
+# dagshub_token = os.getenv("CAPSTONE_TEST")
+# if not dagshub_token:
+#     raise EnvironmentError("CAPSTONE_TEST environment variable is not set")
 
-os.environ["MLFLOW_TRACKING_USERNAME"] = dagshub_token
+# os.environ["MLFLOW_TRACKING_USERNAME"] = dagshub_token
+# os.environ["MLFLOW_TRACKING_PASSWORD"] = dagshub_token
+
+dagshub_username = os.getenv("MLFLOW_TRACKING_USERNAME")
+dagshub_token = os.getenv("MLFLOW_TRACKING_PASSWORD")
+
+if not dagshub_username or not dagshub_token:
+    raise EnvironmentError("DagsHub username or token environment variable is not set")
+
+os.environ["MLFLOW_TRACKING_USERNAME"] = dagshub_username
 os.environ["MLFLOW_TRACKING_PASSWORD"] = dagshub_token
 
 dagshub_url = "https://dagshub.com"
