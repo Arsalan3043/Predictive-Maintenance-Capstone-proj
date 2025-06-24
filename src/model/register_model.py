@@ -109,6 +109,7 @@ class ModelRegistrar:
         dagshub.init(
             repo_owner=self.config.dagshub_repo_owner,
             repo_name=self.config.dagshub_repo_name,
+            token=os.getenv("MLFLOW_TRACKING_PASSWORD"),  # explicitly pass token
             mlflow=True
         )
         logging.info("MLflow and DagsHub tracking initialized.")
