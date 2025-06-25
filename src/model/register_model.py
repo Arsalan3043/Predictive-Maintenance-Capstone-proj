@@ -25,21 +25,21 @@ warnings.filterwarnings("ignore")
 # os.environ["MLFLOW_TRACKING_USERNAME"] = dagshub_token
 # os.environ["MLFLOW_TRACKING_PASSWORD"] = dagshub_token
 
-dagshub_username = os.getenv("MLFLOW_TRACKING_USERNAME")
-dagshub_token = os.getenv("MLFLOW_TRACKING_PASSWORD")
+# dagshub_username = os.getenv("MLFLOW_TRACKING_USERNAME")
+# dagshub_token = os.getenv("MLFLOW_TRACKING_PASSWORD")
 
-if not dagshub_username or not dagshub_token:
-    raise EnvironmentError("DagsHub username or token environment variable is not set")
+# if not dagshub_username or not dagshub_token:
+#     raise EnvironmentError("DagsHub username or token environment variable is not set")
 
-os.environ["MLFLOW_TRACKING_USERNAME"] = dagshub_username
-os.environ["MLFLOW_TRACKING_PASSWORD"] = dagshub_token
+# os.environ["MLFLOW_TRACKING_USERNAME"] = dagshub_username
+# os.environ["MLFLOW_TRACKING_PASSWORD"] = dagshub_token
 
-dagshub_url = "https://dagshub.com"
-repo_owner = "Arsalan3043"
-repo_name = "Predictive-Maintenance-Capstone-proj"
+# dagshub_url = "https://dagshub.com"
+# repo_owner = "Arsalan3043"
+# repo_name = "Predictive-Maintenance-Capstone-proj"
 
-mlflow.set_tracking_uri(f"{dagshub_url}/{repo_owner}/{repo_name}.mlflow")
-mlflow.set_experiment("my-dvc-pipeline")
+# mlflow.set_tracking_uri(f"{dagshub_url}/{repo_owner}/{repo_name}.mlflow")
+# mlflow.set_experiment("my-dvc-pipeline")
 # -------------------------------------------------------------------------------------
 
 
@@ -136,7 +136,16 @@ class ModelRegistrar:
         """
         try:
             model_info = self.load_model_info()
-            model_uri = f"runs:/{model_info['run_id']}/{model_info['model_path']}"
+
+            # Safer access to dictionary keys
+            run_id = model_info.get("run_id")
+            model_path = model_info.get("model_path")
+            if not run_id or not model_path:
+                raise ValueError("run_id or model_path missing in experiment_info.json")
+
+            model_uri = f"runs:/{run_id}/{model_path}"
+
+            # model_uri = f"runs:/{model_info['run_id']}/{model_info['model_path']}"
 
             # Register the model
             model_version = mlflow.register_model(model_uri, self.config.model_name)
