@@ -106,12 +106,12 @@ class ModelRegistrar:
         """
         self.config = config
         mlflow.set_tracking_uri(self.config.tracking_uri)
-        dagshub.init(
-            repo_owner=self.config.dagshub_repo_owner,
-            repo_name=self.config.dagshub_repo_name,
-            # token=os.getenv("MLFLOW_TRACKING_PASSWORD"),  # explicitly pass token
-            mlflow=True
-        )
+        # dagshub.init(
+        #     repo_owner=self.config.dagshub_repo_owner,
+        #     repo_name=self.config.dagshub_repo_name,
+        #     # token=os.getenv("MLFLOW_TRACKING_PASSWORD"),  # explicitly pass token
+        #     mlflow=True
+        # )
         logging.info("MLflow and DagsHub tracking initialized.")
 
     def load_model_info(self) -> dict:
