@@ -3,7 +3,7 @@ name: CI Pipeline
 on: push
 
 jobs:
-  project-testing:
+  Continuous-Integration:
     runs-on: ubuntu-latest
 
     steps:
@@ -86,3 +86,40 @@ jobs:
       - name: Push Docker image to ECR
         run: |
           docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest
+
+  Continuous-Deployment:
+    needs: Continuous-Integration
+    runs-on: self-hosted  # Your EC2 machine is a self-hosted runner
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Stop and Remove Old Container
+        run: |
+          docker stop predictive_maintenance_app || true
+          docker rm predictive_maintenance_app || true
+
+      - name: Pull latest image from ECR
+        run: |
+          docker pull ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY }}:latest
+
+      - name: Run Docker Container
+        run: |
+          docker run -d \
+            --name predictive_maintenance_app \
+            -p 5000:5000 \
+            --restart always \
+            -e MLFLOW_TRACKING_USERNAME=${{ secrets.DAGSHUB_USERNAME }} \
+            -e MLFLOW_TRACKING_PASSWORD=${{ secrets.DAGSHUB_TOKEN }} \
+            ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY }}:latest

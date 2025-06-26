@@ -8,7 +8,7 @@ WORKDIR /app
 COPY flask_app/ /app/
 
 # Copy model artifacts
-COPY saved_models/model.pkl /app/saved_models/model.pkl
+# COPY saved_models/model.pkl /app/saved_models/model.pkl
 
 # Copy config files if needed
 COPY config/schema.yaml /app/config/schema.yaml

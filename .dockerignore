@@ -1,0 +1,37 @@
+# Ignore hidden files/folders
+.git
+.dvc
+.env
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.log
+
+# Ignore unnecessary large folders
+artifacts/
+reports/
+saved_models/  # (Optional — keep if you want it inside container)
+runs/
+
+# Ignore notebook outputs but keep data.csv
+notebooks/*
+!notebooks/data.csv
+
+# Cache and OS files
+*.swp
+*.bak
+*.tmp
+*.DS_Store
+
+# Ignore model files not needed in image
+*.pkl
+*.npy
+*.joblib
+*.h5
+
+# Ignore local virtual environments
+.venv/
+venv/
+ENV/
+env/
