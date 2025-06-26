@@ -45,14 +45,14 @@ repo_owner = "Arsalan3043"
 repo_name = "Predictive-Maintenance-Capstone-proj"
 
 mlflow.set_tracking_uri(f"{dagshub_url}/{repo_owner}/{repo_name}.mlflow")
-mlflow.set_experiment("my-dvc-pipeline")
+# mlflow.set_experiment("my-dvc-pipeline") I think this line no need
 # ---------------------------------------------------------------
 
 # Below code block is for local use
 # -------------------------------------------------------------------------------------
 # mlflow.set_tracking_uri('https://dagshub.com/Arsalan3043/Predictive-Maintenance-Capstone-proj.mlflow')
 # dagshub.init(repo_owner='Arsalan3043', repo_name='Predictive-Maintenance-Capstone-proj', mlflow=True)
-# mlflow.set_experiment("my-dvc-pipeline")
+# mlflow.set_experiment("my-dvc-pipeline")    I think this line no need
 # -------------------------------------------------------------------------------------
 
 # ------------------------------- PROMETHEUS METRICS ----------------------------
@@ -64,7 +64,7 @@ PREDICTION_COUNT = Counter("predicted_classes", "Predicted labels", ["label"], r
 # -------------------------------- LOAD MODEL ----------------------------------
 def load_production_model():
     client = mlflow.tracking.MlflowClient()
-    latest_model = client.get_latest_versions(name="my_model", stages=["Staging"])
+    latest_model = client.get_latest_versions(name="my_model", stages=["Production"])   # Changed Staging to Production after testing_model
     if not latest_model:
         raise Exception("No model found in staging")
     model_uri = f"models:/my_model/{latest_model[0].version}"
