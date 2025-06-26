@@ -8,8 +8,6 @@ import os
 import pandas as pd
 from prometheus_client import Counter, Histogram, generate_latest, CollectorRegistry, CONTENT_TYPE_LATEST
 import time
-from nltk.stem import WordNetLemmatizer
-from nltk.corpus import stopwords
 from src.utils.main_utils import read_yaml_file
 from src.constants import SCHEMA_FILE_PATH
 import string
