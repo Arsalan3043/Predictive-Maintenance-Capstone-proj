@@ -10,6 +10,9 @@ COPY flask_app/ /app/
 # Copy model artifacts
 # COPY saved_models/model.pkl /app/saved_models/model.pkl
 
+# Add this to include your source code
+COPY src/ /app/src/
+
 # Copy config files if needed
 COPY config/schema.yaml /app/config/schema.yaml
 
