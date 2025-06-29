@@ -210,7 +210,7 @@ gunicorn --bind 0.0.0.0:5000 app:app
 ## 👨‍💻 Author
 
 **MD Arsalan Arshad**  
-Aspiring ML Engineer | MLOps | Cloud-Native AI Systems
+Aspiring ML Engineer | MLOps | Cloud-Native AI Systems | Data Science
 
 ---
 
