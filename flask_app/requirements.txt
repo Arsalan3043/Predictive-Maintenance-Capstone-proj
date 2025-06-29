@@ -5,7 +5,7 @@ mlflow_skinny==2.15.0
 pandas==2.3.0
 prometheus_client==0.22.1
 gunicorn==21.2.0
-scikit-learn==1.4.2
+scikit-learn==1.2.2
 PyYAML==6.0.1
 protobuf==4.25.3
 dill==0.3.7
