@@ -1,42 +1,141 @@
--------------------------Setting up project structure---------------------------
 
-1. Create repo, clone it in local
-2. Create a virtual environment named 'atlas' - conda create -n atlas python=3.10
-3. Activate the virtual environment - conda activate atlas
-4. pip install cookiecutter
-5. cookiecutter -c v1 https://github.com/drivendata/cookiecutter-data-science
-6. Rename src.models -> src.model
-7. git add - commit - push
 
--------------------------Setup MLFlow on Dagshub---------------------------
-8. Go to: https://dagshub.com/dashboard
-9. Create > New Repo > Connect a repo > (Github) Connect > Select your repo > Connect
-10. Copy experiment tracking url and code snippet. (Also try: Go To MLFlow UI)
-11. pip install dagshub & mlflow
+"""
+Predictive Maintenance MLOps Workflow (Organized Version)
+Note: All credentials and sensitive tokens are hidden for security purposes.
+"""
 
-12. Run the exp notebooks
-13. git add - commit - push
+# ------------------------- Setting up project structure ---------------------------
 
-14. dvc init
-15. create a local folder as "local_s3" (temporary work)
-16. on terminal - "dvc remote add -d mylocal local_s3"
+# 1. Create GitHub repo and clone it locally.
+# 2. Create a virtual environment named 'atlas':
+#       conda create -n atlas python=3.10
+#       conda activate atlas
+# 3. Install cookiecutter and use it to scaffold the structure:
+#       pip install cookiecutter
+#       cookiecutter -c v1 https://github.com/drivendata/cookiecutter-data-science
+# 4. Rename src.models -> src.model (for clarity).
+# 5. Edit setup.py and pyproject.toml for local package imports.
+# 6. Add dependencies in requirements.txt:
+#       pip install -r requirements.txt
+#       pip list (verify installed packages)
+# 7. git add . && git commit -m "initial structure" && git push
 
-17. Add code to below files/folders inside src dir:
-    - logger
-    - data_ingestion.py
-    - data_preprocessing.py
-    - feature_engineering.py
-    - model_building.py
-    - model_evaluation.py
-    - register_model.py
-18. add file - dvc.yaml (till model evaluation.metrics)
-19. add file - params.yaml
-20. DVC pipeline is ready to run - dvc repro
-21. Once do - dvc status
-22. git add - commit - push
+# ------------------------- Setup MLflow on DagsHub ---------------------------
 
-23. Need to add S3 as remote storage - Create IAM User(keep cred) and S3 bucket
-24. pip install - dvc[s3] & awscli
-25. Checking/deleting dvc remote (optional) - [dvc remote list & dvc remote remove <name>] 
-26. Set aws cred - aws configure
-27. Add s3 as dvc remote storage - dvc remote add -d myremote s3://<bucket-name>
+# 8. Go to: https://dagshub.com/dashboard
+# 9. Create a new repo > Connect to GitHub repo > Follow steps to link it
+# 10. Copy experiment tracking URL and token
+# 11. Install dependencies:
+#       pip install dagshub mlflow
+# 12. Connect MLflow to DagsHub using provided snippet
+
+# ------------------------- EDA and Feature Engineering ---------------------------
+
+# 13. Add and run EDA & Feature Engineering notebooks
+# 14. git add . && git commit -m "EDA and Feature Engg" && git push
+
+# ------------------------- DVC Setup ---------------------------
+
+# 15. dvc init
+# 16. Create local folder "local_s3"
+# 17. dvc remote add -d mylocal local_s3
+
+# ------------------------- Logging and Exception Handling ---------------------------
+
+# 18. Create src/logger.py and src/exception.py and validate using demo.py
+
+# ------------------------- Data Ingestion Component ---------------------------
+
+# 19. Declare variables in constants/__init__.py
+# 20. Update entity/config_entity.py > DataIngestionConfig
+# 21. Update entity/artifact_entity.py > DataIngestionArtifact
+# 22. Implement components/data_ingestion.py
+# 23. Test using demo.py
+
+# ------------------------- Data Validation, Transformation & Model Trainer ---------------------------
+
+# 24. Complete utils/main_utils.py and config/schema.yaml (describe dataset schema)
+# 25. Implement Data Validation (same pattern as ingestion)
+# 26. Implement Data Transformation (include estimator.py in entity)
+# 27. Implement Model Trainer (update estimator.py)
+
+# ------------------------- AWS Setup for Model Evaluation & Registry ---------------------------
+
+# 28. Configure AWS IAM user and get Access/Secret keys
+#     - Set environment variables (e.g., export AWS_ACCESS_KEY_ID=...)
+#     - Add values in constants/__init__.py (region, bucket, etc.)
+#     - Configure aws_connection.py in src/configuration/
+#     - Create S3 bucket: "arsalan-vehicle-mlopsproj" (uncheck block all public access)
+#     - Add logic in src/aws_storage/ for upload/download
+#     - Create entity/s3_estimator.py for helper functions
+
+# ------------------------- Model Evaluation, Pusher, and Registration ---------------------------
+
+# 29. Implement Model Evaluation, Model Pusher, and Model Registration components.
+
+# ------------------------- DVC Pipeline Management ---------------------------
+
+# 30. Create dvc.yaml and params.yaml
+# 31. Build run_pipeline.py to avoid timestamp conflicts when running dvc repro
+# 32. Run: python run_pipeline.py
+# 33. dvc status
+# 34. git add . && git commit -m "DVC pipeline added" && git push
+
+# ------------------------- DVC Remote on S3 ---------------------------
+
+# 35. Ensure S3 bucket and IAM credentials are ready
+# 36. pip install 'dvc[s3]' awscli
+# 37. Check/remove existing remotes: dvc remote list, dvc remote remove <name>
+# 38. Configure AWS: aws configure
+# 39. Add S3 remote: dvc remote add -d myremote s3://<bucket-name>
+
+# ------------------------- Flask App Deployment ---------------------------
+
+# 40. Create flask_app directory and add relevant files
+# 41. pip install flask && run the app locally
+# 42. dvc push (to sync artifacts to S3)
+# 43. pip freeze > requirements.txt
+
+# ------------------------- CI Setup with GitHub Actions ---------------------------
+
+# 44. Add .github/workflows/ci.yaml file
+# 45. Go to DagsHub repo > Settings > Tokens > Generate token
+#     - Add token to GitHub secrets (name it properly like DAGSHUB_TOKEN)
+# 46. Create tests/ and scripts/ directories with test scripts
+
+# ------------------------- AWS for Docker and ECR Setup ---------------------------
+
+# 47. Setup GitHub secrets:
+#     - AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION, ECR_REPOSITORY, AWS_ACCOUNT_ID
+#     - IAM user should have AmazonEC2ContainerRegistryFullAccess
+
+# 48. On AWS, create ECR repo: capstone-proj
+
+# ------------------------- Docker + EC2 Setup for CD ---------------------------
+
+# 49. Create Dockerfile and .dockerignore
+# 50. Launch EC2 instance (Ubuntu 24.04, T2 Medium, 30GB, allow HTTP/HTTPS)
+#     - Connect using EC2 Instance Connect
+
+# 51. On EC2, install Docker:
+#     sudo apt update -y
+#     sudo apt upgrade -y
+#     curl -fsSL https://get.docker.com -o get-docker.sh
+#     sudo sh get-docker.sh
+#     sudo usermod -aG docker ubuntu
+#     newgrp docker
+
+# 52. Setup GitHub Self-Hosted Runner:
+#     - GitHub > Settings > Actions > Runners > New runner > Follow instructions
+#     - On EC2, run ./run.sh to connect
+
+# 53. Add port rule to EC2 Security Group:
+#     - Inbound rule > Custom TCP > Port 5000 > 0.0.0.0/0
+
+# 54. Access app: <EC2-Public-IP>:5000
+
+# ------------------------- CI/CD Ready ---------------------------
+
+# At this stage, GitHub CI/CD will build Docker image, push to ECR, pull it in EC2,
+# and run the container. The app will be live and trackable through MLflow and DagsHub.
